@@ -139,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
+    <ClInclude Include="DeviceContextStore.hpp" />
     <ClInclude Include="Reousrce.h" />
     <ClInclude Include="TobiiRender.hpp" />
     <ClInclude Include="Utils.hpp" />

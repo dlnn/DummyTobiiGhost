@@ -474,15 +474,15 @@ private:
 
 	void RenderAndSwapBuffer()
 	{
-		auto pContextStore = CreateDeviceContextStore();
 		{
-			pContextStore->OMSetRenderTargets(1, &_backRenderTargetResource.pRtv, nullptr);
+			DeviceContextStore contextStore(_pDeviceContext);
+			contextStore.OMSetRenderTargets(1, &_backRenderTargetResource.pRtv, nullptr);
 
 			const D3D11_RECT clipRect = {_dxRect.left / static_cast<long>(_downsampleFactor), _dxRect.top / static_cast<long>(_downsampleFactor), _dxRect.right / static_cast<long>(_downsampleFactor), _dxRect.bottom / static_cast<long>(_downsampleFactor)};
-			pContextStore->RSSetScissorRects(1, &clipRect);
+			contextStore.RSSetScissorRects(1, &clipRect);
 
 			const D3D11_VIEWPORT viewport = {0.0f, 0.0f, static_cast<float>(_width / _downsampleFactor), static_cast<float>(_height / _downsampleFactor), 0.0f, 1.0f};
-			pContextStore->RSSetViewports(1, &viewport);
+			contextStore.RSSetViewports(1, &viewport);
 
 			auto pPixelShader = _pPixelShaderSolid;
 			if (!_renderData.GazePoints.empty())
@@ -496,20 +496,13 @@ private:
 					pPixelShader = _pPixelShaderBubble;
 				}
 			}
-			pContextStore->PSSetShader(pPixelShader, nullptr, 0);
-			pContextStore->PSSetShaderResources(0, 1, &_frontRenderTargetResource.pSrv);
+			contextStore.PSSetShader(pPixelShader, nullptr, 0);
+			contextStore.PSSetShaderResources(0, 1, &_frontRenderTargetResource.pSrv);
 			_pDeviceContext->Draw(_vertexCount, 0);
-
-			pContextStore->Restore();
 		}
 
 
 		std::swap(_frontRenderTargetResource, _backRenderTargetResource);
-	}
-
-	DeviceContextStore* CreateDeviceContextStore() const
-	{
-		return new DeviceContextStore(_pDeviceContext);
 	}
 
 public:
@@ -547,21 +540,21 @@ public:
 
 	void Render()
 	{
-		auto pContextStore = CreateDeviceContextStore();
 		{
-			unsigned int stride = sizeof(Vertex);
-			unsigned int offset = 0;
+			DeviceContextStore contextStore(_pDeviceContext);
+			unsigned int       stride = sizeof(Vertex);
+			unsigned int       offset = 0;
 
-			pContextStore->IASetInputLayout(_pInputLayout);
-			pContextStore->IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
-			pContextStore->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			contextStore.IASetInputLayout(_pInputLayout);
+			contextStore.IASetVertexBuffers(0, 1, &_pVertexBuffer, &stride, &offset);
+			contextStore.IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			pContextStore->VSSetShader(_pVertexShader, nullptr, 0);
+			contextStore.VSSetShader(_pVertexShader, nullptr, 0);
 
-			pContextStore->RSSetState(_pRasterizerState);
+			contextStore.RSSetState(_pRasterizerState);
 
-			pContextStore->PSSetConstantBuffers(0, 1, &_pPSConstantBuffer);
-			pContextStore->PSSetSamplers(0, 1, &_pSamplerState);
+			contextStore.PSSetConstantBuffers(0, 1, &_pPSConstantBuffer);
+			contextStore.PSSetSamplers(0, 1, &_pSamplerState);
 
 			if (_renderData.BackgroundColorIsDirty)
 			{
@@ -635,11 +628,11 @@ public:
 
 				RenderAndSwapBuffer();
 
-				pContextStore->OMSetRenderTargets(1, &_pMainRtv, nullptr);
-				pContextStore->RSSetScissorRects(1, &_dxRect);
+				contextStore.OMSetRenderTargets(1, &_pMainRtv, nullptr);
+				contextStore.RSSetScissorRects(1, &_dxRect);
 
 				const D3D11_VIEWPORT viewport = {0.0f, 0.0f, fWidth, fHeight, 0.0f, 1.0f};
-				pContextStore->RSSetViewports(1, &viewport);
+				contextStore.RSSetViewports(1, &viewport);
 
 				auto pPixelShader = _pPixelShaderNormalBlend;
 
@@ -648,16 +641,15 @@ public:
 					pPixelShader = _pPixelShaderHeatmapBlend;
 				}
 
-				pContextStore->PSSetShader(pPixelShader, nullptr, 0);
-				pContextStore->PSSetShaderResources(0, 1, &_frontRenderTargetResource.pSrv);
+				contextStore.PSSetShader(pPixelShader, nullptr, 0);
+				contextStore.PSSetShaderResources(0, 1, &_frontRenderTargetResource.pSrv);
 
 				if (_shapeResource.pSrv)
-					pContextStore->PSSetShaderResources(1, 1, &_shapeResource.pSrv);
+					contextStore.PSSetShaderResources(1, 1, &_shapeResource.pSrv);
 
 				_pDeviceContext->Draw(_vertexCount, 0);
 			}
 		}
-		pContextStore->Restore();
 	}
 
 	HRESULT Present(UINT SyncInterval = 1, UINT Flags = 0) const

@@ -260,6 +260,7 @@ public:
 
 	~DeviceContextStore()
 	{
+		Restore();
 		_pDeviceContext->Release();
 	}
 
